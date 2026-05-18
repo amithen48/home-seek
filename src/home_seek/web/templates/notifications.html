@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% from "_macros.html" import price, source_badge, fmt_datetime %}
+
+{% block title %}התראות{% endblock %}
+
+{% block content %}
+
+<h1 class="text-2xl font-bold mb-4">התראות ({{ notifications|length }})</h1>
+
+{% if notifications %}
+<div class="bg-white rounded-lg shadow-sm border border-slate-200 overflow-x-auto">
+  <table class="w-full text-sm">
+    <thead class="bg-slate-50 text-slate-600 text-xs">
+      <tr class="text-right">
+        <th class="px-3 py-2">נשלחה</th>
+        <th class="px-3 py-2">מקור</th>
+        <th class="px-3 py-2">דירה</th>
+        <th class="px-3 py-2">מחיר</th>
+        <th class="px-3 py-2">אזור</th>
+        <th class="px-3 py-2">פרופיל</th>
+        <th class="px-3 py-2">Telegram ID</th>
+        <th class="px-3 py-2">סטטוס</th>
+        <th class="px-3 py-2"></th>
+      </tr>
+    </thead>
+    <tbody class="divide-y divide-slate-100">
+      {% for n in notifications %}
+      <tr>
+        <td class="px-3 py-2 text-xs">{{ fmt_datetime(n.sent_at) }}</td>
+        <td class="px-3 py-2">{{ source_badge(n.listing.source) }}</td>
+        <td class="px-3 py-2 max-w-xs truncate">
+          <a href="{{ n.listing.url }}" target="_blank" class="text-indigo-600 hover:underline">
+            {{ n.listing.title or n.listing.address or n.listing.source.value ~ '#' ~ n.listing.id }}
+          </a>
+        </td>
+        <td class="px-3 py-2 font-semibold">{{ price(n.listing.price) }}</td>
+        <td class="px-3 py-2">{{ n.area.name }}</td>
+        <td class="px-3 py-2">{{ n.profile.name }}</td>
+        <td class="px-3 py-2 text-xs num">
+          {{ n.telegram_message_id or '—' }}
+        </td>
+        <td class="px-3 py-2">
+          {% if n.dismissed %}
+            <span class="text-xs px-2 py-0.5 rounded bg-slate-200 text-slate-700">נדחתה</span>
+          {% else %}
+            <span class="text-xs px-2 py-0.5 rounded bg-emerald-100 text-emerald-700">פעילה</span>
+          {% endif %}
+        </td>
+        <td class="px-3 py-2">
+          {% if not n.dismissed %}
+          <button hx-post="/api/notifications/{{ n.id }}/dismiss"
+                  hx-swap="none"
+                  hx-on::after-request="window.location.reload()"
+                  class="text-xs text-slate-500 hover:text-slate-800">
+            דחה
+          </button>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+<p class="text-sm text-slate-500">לא נשלחו התראות עדיין.</p>
+{% endif %}
+
+{% endblock %}

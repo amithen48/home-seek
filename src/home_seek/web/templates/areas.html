@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+{% from "_macros.html" import fmt_datetime %}
+
+{% block title %}אזורים{% endblock %}
+
+{% block content %}
+
+<div class="flex items-center justify-between mb-4">
+  <h1 class="text-2xl font-bold">אזורים ({{ areas|length }})</h1>
+  <button onclick="document.getElementById('new-area').classList.toggle('hidden')"
+          class="bg-indigo-600 hover:bg-indigo-700 text-white text-sm px-3 py-2 rounded">
+    + אזור חדש
+  </button>
+</div>
+
+<div id="new-area" class="hidden bg-white border border-slate-200 rounded-lg p-4 mb-4">
+  <h2 class="font-semibold mb-2">צור אזור חדש</h2>
+  <form
+    hx-post="/api/areas"
+    hx-ext="json-enc"
+    hx-on::after-request="if (event.detail.successful) window.location.reload()"
+    class="grid md:grid-cols-2 gap-3 text-sm">
+    <label class="block">
+      <span class="text-xs text-slate-500">שם</span>
+      <input name="name" required class="w-full border border-slate-300 rounded px-2 py-1">
+    </label>
+    <label class="block">
+      <span class="text-xs text-slate-500">עיר</span>
+      <input name="city" required class="w-full border border-slate-300 rounded px-2 py-1">
+    </label>
+    <label class="block">
+      <span class="text-xs text-slate-500">סוג גאומטריה</span>
+      <select name="geometry_type" required class="w-full border border-slate-300 rounded px-2 py-1">
+        <option value="radius">רדיוס</option>
+        <option value="polygon">פוליגון (GeoJSON)</option>
+      </select>
+    </label>
+    <label class="block">
+      <span class="text-xs text-slate-500">רדיוס (מטרים)</span>
+      <input name="radius_meters" type="number" class="w-full border border-slate-300 rounded px-2 py-1">
+    </label>
+    <label class="block">
+      <span class="text-xs text-slate-500">מרכז - lat</span>
+      <input name="center_lat" type="number" step="any" class="w-full border border-slate-300 rounded px-2 py-1">
+    </label>
+    <label class="block">
+      <span class="text-xs text-slate-500">מרכז - lng</span>
+      <input name="center_lng" type="number" step="any" class="w-full border border-slate-300 rounded px-2 py-1">
+    </label>
+    <div class="md:col-span-2 text-left">
+      <button type="submit" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1 rounded">צור</button>
+    </div>
+  </form>
+  <p class="text-xs text-slate-400 mt-2">
+    טיפ: ל-Yad2 אפשר להוסיף <code>yad2_neighborhood_ids</code>, <code>yad2_city_id</code>
+    דרך ה-API ישירות (יראה ב-/docs).
+  </p>
+</div>
+
+{% if areas %}
+<div class="bg-white rounded-lg shadow-sm border border-slate-200 overflow-x-auto">
+  <table class="w-full text-sm">
+    <thead class="bg-slate-50 text-slate-600 text-xs">
+      <tr class="text-right">
+        <th class="px-3 py-2">שם</th>
+        <th class="px-3 py-2">עיר</th>
+        <th class="px-3 py-2">סוג</th>
+        <th class="px-3 py-2">מרכז</th>
+        <th class="px-3 py-2">רדיוס</th>
+        <th class="px-3 py-2">Yad2 IDs</th>
+        <th class="px-3 py-2">פעיל</th>
+        <th class="px-3 py-2">נוצר</th>
+        <th class="px-3 py-2"></th>
+      </tr>
+    </thead>
+    <tbody class="divide-y divide-slate-100">
+      {% for a in areas %}
+      <tr>
+        <td class="px-3 py-2 font-medium">{{ a.name }}</td>
+        <td class="px-3 py-2">{{ a.city }}</td>
+        <td class="px-3 py-2">
+          <span class="text-xs px-2 py-0.5 rounded bg-slate-100">{{ a.geometry_type.value }}</span>
+        </td>
+        <td class="px-3 py-2 num text-xs">
+          {% if a.center_lat is not none %}{{ "%.4f"|format(a.center_lat) }}, {{ "%.4f"|format(a.center_lng) }}{% else %}—{% endif %}
+        </td>
+        <td class="px-3 py-2 num text-xs">{% if a.radius_meters %}{{ a.radius_meters }} מ׳{% else %}—{% endif %}</td>
+        <td class="px-3 py-2 text-xs">
+          {% if a.yad2_neighborhood_ids %}{{ a.yad2_neighborhood_ids|join(", ") }}{% else %}—{% endif %}
+        </td>
+        <td class="px-3 py-2">{% if a.active %}✓{% else %}✗{% endif %}</td>
+        <td class="px-3 py-2 text-xs text-slate-500">{{ fmt_datetime(a.created_at) }}</td>
+        <td class="px-3 py-2">
+          <button hx-post="/areas/{{ a.id }}/delete"
+                  hx-confirm="למחוק את האזור '{{ a.name }}'?"
+                  class="text-rose-600 hover:underline text-xs">
+            מחק
+          </button>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+<p class="text-sm text-slate-500">לא הוגדרו אזורים. צור אזור חדש כדי שהמערכת תתחיל לעקוב.</p>
+{% endif %}
+
+<script>
+  // Tiny client-side helper: serialise the new-area form as JSON instead of x-www-form-urlencoded
+  // (FastAPI route expects JSON body).
+  htmx.defineExtension('json-enc', {
+    onEvent: function (name, evt) {
+      if (name === "htmx:configRequest") {
+        evt.detail.headers['Content-Type'] = "application/json";
+      }
+    },
+    encodeParameters: function (xhr, parameters, _elt) {
+      xhr.overrideMimeType("text/json");
+      const result = {};
+      for (const [k, v] of Object.entries(parameters)) {
+        if (v === "" || v === null) continue;
+        if (k === "radius_meters") { result[k] = parseInt(v); }
+        else if (k === "center_lat" || k === "center_lng") { result[k] = parseFloat(v); }
+        else { result[k] = v; }
+      }
+      return JSON.stringify(result);
+    }
+  });
+</script>
+
+{% endblock %}

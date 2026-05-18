@@ -1,0 +1,32 @@
+#!/usr/bin/env bash
+# Pre-commit hook: auto-fix lint issues, then strict-check.
+# Stages any auto-fixes so the resulting commit is clean.
+set -euo pipefail
+
+repo_root="$(git rev-parse --show-toplevel)"
+cd "$repo_root"
+
+# Collect Python files staged for commit (added / modified / renamed).
+mapfile -t staged_py < <(git diff --cached --name-only --diff-filter=ACMR | grep -E '\.py$' || true)
+
+if [ "${#staged_py[@]}" -eq 0 ]; then
+    exit 0
+fi
+
+echo "[pre-commit] formatting and linting ${#staged_py[@]} python file(s)..."
+
+# Auto-format and auto-fix. These rewrite files on disk.
+uv run ruff format "${staged_py[@]}"
+uv run ruff check --fix "${staged_py[@]}"
+
+# Re-stage anything the auto-fixers changed so the commit reflects the fixes.
+git add "${staged_py[@]}"
+
+# Final strict pass - fails the commit if anything is still wrong.
+echo "[pre-commit] ruff strict check..."
+uv run ruff check "${staged_py[@]}"
+
+echo "[pre-commit] mypy strict check..."
+uv run mypy src
+
+echo "[pre-commit] OK"

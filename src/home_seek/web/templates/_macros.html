@@ -1,0 +1,54 @@
+{# Shared rendering helpers. #}
+
+{% macro stat_card(title, value, hint=None, color="indigo") %}
+<div class="bg-white rounded-lg shadow-sm border border-slate-200 p-4">
+  <div class="text-sm text-slate-500">{{ title }}</div>
+  <div class="text-3xl font-bold text-{{ color }}-700 num mt-1">{{ value }}</div>
+  {% if hint %}<div class="text-xs text-slate-400 mt-1">{{ hint }}</div>{% endif %}
+</div>
+{% endmacro %}
+
+{% macro yes_no(flag) %}
+  {% if flag is none %}
+    <span class="text-slate-300">?</span>
+  {% elif flag %}
+    <span class="text-emerald-600">✓</span>
+  {% else %}
+    <span class="text-rose-500">✗</span>
+  {% endif %}
+{% endmacro %}
+
+{% macro price(value) %}
+  {% if value %}<span class="num">{{ "{:,}".format(value) }} ₪</span>{% else %}—{% endif %}
+{% endmacro %}
+
+{% macro source_badge(source) %}
+  {% set color_map = {
+    'yad2': 'bg-orange-100 text-orange-800',
+    'madlan': 'bg-blue-100 text-blue-800',
+    'homeless': 'bg-pink-100 text-pink-800',
+    'facebook': 'bg-indigo-100 text-indigo-800',
+    'stub': 'bg-slate-100 text-slate-700',
+  } %}
+  {% set src_value = source.value if source.value is defined else source %}
+  <span class="text-xs px-2 py-0.5 rounded {{ color_map.get(src_value, 'bg-slate-100 text-slate-700') }}">
+    {{ src_value }}
+  </span>
+{% endmacro %}
+
+{% macro status_badge(status) %}
+  {% set status_value = status.value if status.value is defined else status %}
+  {% set color_map = {
+    'success': 'bg-emerald-100 text-emerald-700',
+    'running': 'bg-blue-100 text-blue-700',
+    'blocked': 'bg-amber-100 text-amber-700',
+    'error': 'bg-rose-100 text-rose-700',
+  } %}
+  <span class="text-xs px-2 py-0.5 rounded {{ color_map.get(status_value, 'bg-slate-100 text-slate-700') }}">
+    {{ status_value }}
+  </span>
+{% endmacro %}
+
+{% macro fmt_datetime(value) %}
+  {% if value %}<span class="num">{{ value.strftime("%Y-%m-%d %H:%M") }}</span>{% else %}—{% endif %}
+{% endmacro %}

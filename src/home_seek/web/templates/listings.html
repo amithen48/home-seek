@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+{% from "_macros.html" import price, source_badge, yes_no, fmt_datetime %}
+
+{% block title %}דירות{% endblock %}
+
+{% block content %}
+
+<div class="flex items-center justify-between mb-4">
+  <h1 class="text-2xl font-bold">דירות ({{ listings|length }})</h1>
+</div>
+
+<form method="get" class="flex flex-wrap gap-2 bg-white border border-slate-200 rounded-lg p-3 mb-4">
+  <select name="source" class="border border-slate-300 rounded px-2 py-1 text-sm">
+    <option value="">כל המקורות</option>
+    {% for s in sources %}
+      <option value="{{ s.value }}" {% if selected_source and selected_source.value == s.value %}selected{% endif %}>
+        {{ s.value }}
+      </option>
+    {% endfor %}
+  </select>
+  <select name="city" class="border border-slate-300 rounded px-2 py-1 text-sm">
+    <option value="">כל הערים</option>
+    {% for c in cities %}
+      <option value="{{ c }}" {% if selected_city == c %}selected{% endif %}>{{ c }}</option>
+    {% endfor %}
+  </select>
+  <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white text-sm px-3 py-1 rounded">סנן</button>
+  <a href="/listings" class="text-sm text-slate-500 hover:text-slate-700 px-3 py-1">נקה</a>
+</form>
+
+{% if listings %}
+<div class="bg-white rounded-lg shadow-sm border border-slate-200 overflow-x-auto">
+  <table class="w-full text-sm">
+    <thead class="bg-slate-50 text-slate-600 text-xs">
+      <tr class="text-right">
+        <th class="px-3 py-2">מקור</th>
+        <th class="px-3 py-2">כותרת</th>
+        <th class="px-3 py-2">כתובת</th>
+        <th class="px-3 py-2">מחיר</th>
+        <th class="px-3 py-2">חדרים</th>
+        <th class="px-3 py-2">מ״ר</th>
+        <th class="px-3 py-2">קומה</th>
+        <th class="px-3 py-2">חניה</th>
+        <th class="px-3 py-2">מעלית</th>
+        <th class="px-3 py-2">נראתה</th>
+        <th class="px-3 py-2"></th>
+      </tr>
+    </thead>
+    <tbody class="divide-y divide-slate-100">
+      {% for l in listings %}
+      <tr class="hover:bg-slate-50">
+        <td class="px-3 py-2">{{ source_badge(l.source) }}</td>
+        <td class="px-3 py-2 max-w-xs truncate">{{ l.title or "—" }}</td>
+        <td class="px-3 py-2 text-xs text-slate-600">
+          {{ l.address or "" }}
+          {% if l.neighborhood %}<span class="text-slate-400">· {{ l.neighborhood }}</span>{% endif %}
+        </td>
+        <td class="px-3 py-2 font-semibold">{{ price(l.price) }}</td>
+        <td class="px-3 py-2 num">{{ l.rooms or "—" }}</td>
+        <td class="px-3 py-2 num">{{ l.sqm or "—" }}</td>
+        <td class="px-3 py-2 num text-xs">
+          {% if l.floor is not none %}{{ l.floor }}{% if l.total_floors %}/{{ l.total_floors }}{% endif %}{% else %}—{% endif %}
+        </td>
+        <td class="px-3 py-2 text-center">{{ yes_no(l.parking) }}</td>
+        <td class="px-3 py-2 text-center">{{ yes_no(l.elevator) }}</td>
+        <td class="px-3 py-2 text-xs text-slate-500">{{ fmt_datetime(l.first_seen_at) }}</td>
+        <td class="px-3 py-2">
+          <a href="{{ l.url }}" target="_blank"
+             class="text-indigo-600 hover:underline text-xs">פתח ↗</a>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+<p class="text-sm text-slate-500">אין דירות שתואמות את הפילטר.</p>
+{% endif %}
+
+{% endblock %}
