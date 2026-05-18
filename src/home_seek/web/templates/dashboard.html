@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% from "_macros.html" import stat_card, price, source_badge, status_badge, fmt_datetime %}
+
+{% block title %}לוח בקרה{% endblock %}
+
+{% block content %}
+
+<h1 class="text-2xl font-bold mb-4">לוח בקרה</h1>
+
+<div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+  {{ stat_card("דירות במאגר", "{:,}".format(stats.total_listings), color="indigo") }}
+  {{ stat_card("אזורים פעילים", stats.active_areas, color="emerald") }}
+  {{ stat_card("התראות נשלחו", stats.notifications, color="rose") }}
+  {{ stat_card("מקורות פעילים", stats.by_source|length, hint=stats.by_source|join(", "), color="amber") }}
+</div>
+
+<div class="grid md:grid-cols-2 gap-4">
+
+  <section class="bg-white rounded-lg shadow-sm border border-slate-200 p-4">
+    <div class="flex items-center justify-between mb-3">
+      <h2 class="font-semibold">דירות אחרונות</h2>
+      <a href="/listings" class="text-sm text-indigo-600 hover:underline">הצג הכל →</a>
+    </div>
+    {% if recent_listings %}
+      <ul class="divide-y divide-slate-100">
+        {% for l in recent_listings %}
+          <li class="py-2 flex items-center justify-between text-sm">
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center gap-2">
+                {{ source_badge(l.source) }}
+                <span class="font-medium truncate">{{ l.title or "—" }}</span>
+              </div>
+              <div class="text-xs text-slate-500 truncate">
+                {{ l.address or "" }} · {{ l.neighborhood or l.city or "" }}
+              </div>
+            </div>
+            <div class="text-left ms-3">
+              <div class="font-semibold">{{ price(l.price) }}</div>
+              <div class="text-xs text-slate-400">{{ l.rooms or "—" }} ח׳</div>
+            </div>
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p class="text-sm text-slate-500">אין עדיין דירות במאגר. לחץ "הרץ עכשיו" למעלה.</p>
+    {% endif %}
+  </section>
+
+  <section class="bg-white rounded-lg shadow-sm border border-slate-200 p-4">
+    <div class="flex items-center justify-between mb-3">
+      <h2 class="font-semibold">ריצות אחרונות</h2>
+      <a href="/runs" class="text-sm text-indigo-600 hover:underline">הצג הכל →</a>
+    </div>
+    {% if recent_runs %}
+      <table class="w-full text-sm">
+        <thead class="text-xs text-slate-500 text-right">
+          <tr>
+            <th class="py-1 pe-2">מתי</th>
+            <th class="py-1 pe-2">מקור</th>
+            <th class="py-1 pe-2">מצב</th>
+            <th class="py-1 pe-2">נמצאו</th>
+            <th class="py-1 pe-2">חדשים</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100">
+          {% for r in recent_runs %}
+            <tr>
+              <td class="py-1 pe-2 text-xs">{{ fmt_datetime(r.started_at) }}</td>
+              <td class="py-1 pe-2">{{ source_badge(r.source) }}</td>
+              <td class="py-1 pe-2">{{ status_badge(r.status) }}</td>
+              <td class="py-1 pe-2 num">{{ r.listings_found }}</td>
+              <td class="py-1 pe-2 num font-medium">{{ r.listings_new }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% else %}
+      <p class="text-sm text-slate-500">לא בוצעו ריצות עדיין.</p>
+    {% endif %}
+  </section>
+
+</div>
+
+{% endblock %}

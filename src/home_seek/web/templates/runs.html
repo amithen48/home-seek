@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% from "_macros.html" import source_badge, status_badge, fmt_datetime %}
+
+{% block title %}ריצות סקרייפינג{% endblock %}
+
+{% block content %}
+
+<h1 class="text-2xl font-bold mb-4">ריצות סקרייפינג ({{ runs|length }})</h1>
+
+{% if runs %}
+<div class="bg-white rounded-lg shadow-sm border border-slate-200 overflow-x-auto">
+  <table class="w-full text-sm">
+    <thead class="bg-slate-50 text-slate-600 text-xs">
+      <tr class="text-right">
+        <th class="px-3 py-2">התחיל</th>
+        <th class="px-3 py-2">הסתיים</th>
+        <th class="px-3 py-2">מקור</th>
+        <th class="px-3 py-2">אזור</th>
+        <th class="px-3 py-2">מצב</th>
+        <th class="px-3 py-2">נמצאו</th>
+        <th class="px-3 py-2">חדשים</th>
+        <th class="px-3 py-2">התראות</th>
+        <th class="px-3 py-2">שגיאה</th>
+      </tr>
+    </thead>
+    <tbody class="divide-y divide-slate-100">
+      {% for r in runs %}
+      <tr>
+        <td class="px-3 py-2 text-xs">{{ fmt_datetime(r.started_at) }}</td>
+        <td class="px-3 py-2 text-xs">{{ fmt_datetime(r.finished_at) }}</td>
+        <td class="px-3 py-2">{{ source_badge(r.source) }}</td>
+        <td class="px-3 py-2 text-xs">{{ r.area.name if r.area else '—' }}</td>
+        <td class="px-3 py-2">{{ status_badge(r.status) }}</td>
+        <td class="px-3 py-2 num">{{ r.listings_found }}</td>
+        <td class="px-3 py-2 num font-medium">{{ r.listings_new }}</td>
+        <td class="px-3 py-2 num">{{ r.notifications_sent }}</td>
+        <td class="px-3 py-2 text-xs text-rose-600 max-w-xs truncate">{{ r.error_message or '' }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+<p class="text-sm text-slate-500">עדיין אין ריצות.</p>
+{% endif %}
+
+{% endblock %}
